@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client';
+import prisma from '@/lib/prisma';
 import axios from 'axios';
-
-const prisma = new PrismaClient();
 
 // interface Contest {
 //   name: string;
@@ -80,7 +78,6 @@ export const fetchAndStoreCodeChefContests = async () => {
     console.log("Contests added to the database.");
   } catch (error) {
     console.error("Error fetching contests from CodeChef API:", error);
-  } finally {
-    await prisma.$disconnect();
   }
 };
+ 
