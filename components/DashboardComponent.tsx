@@ -45,24 +45,26 @@
 // }
 
 
+import axios from 'axios';
 import { ContestCard } from "./Card";
-import prisma from "@/lib/prisma";
-import { fetchAndStoreCodeChefContests } from "@/lib/fetchALl";
-import { SearchComponent } from "./Dashboard/searchbar";
-import { FilterComponent } from "./Dashboard/filterComponent";
-import { BookmarkComponent } from "./Dashboard/Bookmart";
+import type { Contest } from '@/types/contest';
+ 
 
 export async function DashboardComponent() {
-  let data = await prisma.contest.findMany();
+  let data: Contest[] = [];
+  const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || process.env.NEXTAUTH_URL || 'http://localhost:3000';
+ 
 
-  // If no contests are present, ingest from CodeChef and then re-query
-  if (data.length === 0) {
-    try {
-      await fetchAndStoreCodeChefContests();
-      data = await prisma.contest.findMany();
-    } catch (error) {
-      console.error("Error ingesting contests on Dash visit:", error);
-    }
+  try {
+    const res = await axios.get(`${BASE_URL}/api/contests`);
+    const result = res.data;
+    data = (result?.contests ?? []) as Contest[];
+
+   
+   
+  } catch (err: unknown) {
+    // If the server can't reach the internal endpoints (network error), log for debugging and keep `data` as empty
+    console.error('Error retrieving contests from API (axios):', (err as Error)?.message ?? String(err));
   }
 
   return (
@@ -84,8 +86,8 @@ export async function DashboardComponent() {
 
       {/* Contest Cards Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 px-4">
-        {/* @ts-expect-error some-type-error */}
-        {data.map((contest, index) => {
+        
+        {data.map((contest: Contest, index: number) => {
           console.log("contests are mapped", contest);
           return <ContestCard contest={contest} index={index} key={contest.id} />;
         })}

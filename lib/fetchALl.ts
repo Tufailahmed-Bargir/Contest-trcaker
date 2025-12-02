@@ -45,7 +45,7 @@ export const fetchAndStoreCodeChefContests = async () => {
       if (now < startTime) {
         status = "Upcoming";
       } else if (now >= startTime && now <= endTime) {
-        status = "Ongoing";
+        status = "ongoing"; // lowercase to match UI mapping
       } else {
         status = "Finished";
       }
@@ -58,6 +58,7 @@ export const fetchAndStoreCodeChefContests = async () => {
       return {
         name: contest.contest_name,
         platform: "CodeChef",
+        id: contest.contest_code,
         date: startTime.toISOString(),
         time: startTime.toISOString(),
         duration: formattedDuration,
@@ -78,6 +79,50 @@ export const fetchAndStoreCodeChefContests = async () => {
     console.log("Contests added to the database.");
   } catch (error) {
     console.error("Error fetching contests from CodeChef API:", error);
+  }
+};
+
+export const fetchCodeChefContests = async () => {
+  try {
+    const response = await axios.get<CodeChefAPIResponse>(
+      'https://competeapi.vercel.app/contests/codechef/'
+    );
+
+    const now = new Date();
+    const contests = response.data.past_contests.map((contest) => {
+      const startTime = new Date(contest.contest_start_date_iso);
+      const endTime = new Date(contest.contest_end_date_iso);
+
+      let status: string;
+      if (now < startTime) {
+        status = 'Upcoming';
+      } else if (now >= startTime && now <= endTime) {
+        status = 'ongoing'; // lowercase
+      } else {
+        status = 'Finished';
+      }
+
+      const durationMinutes = parseInt(contest.contest_duration, 10);
+      const durationHours = Math.floor(durationMinutes / 60);
+      const remainingMinutes = durationMinutes % 60;
+      const formattedDuration = `${durationHours} hr ${remainingMinutes} min`;
+
+      return {
+        name: contest.contest_name,
+        platform: 'CodeChef',
+        id: contest.contest_code,
+        date: startTime.toISOString(),
+        time: startTime.toISOString(),
+        duration: formattedDuration,
+        status,
+        url: `https://www.codechef.com/${contest.contest_code}`,
+      };
+    });
+
+    return contests;
+  } catch (error) {
+    console.error('Error fetching contests from CodeChef API (read-only):', error);
+    return [];
   }
 };
  
